@@ -193,6 +193,13 @@ This will:
 2. Send Slack alerts for surge accounts
 3. Generate completion report
 
+### Output 
+<img width="1917" height="812" alt="slack-1" src="https://github.com/user-attachments/assets/7c0ef347-05d9-42b7-a0ef-d4bea53bbe7b" />
+<img width="1906" height="866" alt="slack-2" src="https://github.com/user-attachments/assets/b7777397-579d-4e10-b1f3-bd80a3633b44" />
+<img width="1901" height="786" alt="slack-3" src="https://github.com/user-attachments/assets/efaa2ec3-17d0-46b6-a012-7d548ae3390f" />
+<img width="1917" height="730" alt="slack-4" src="https://github.com/user-attachments/assets/3da50e5c-9aed-4e6f-a2f7-2c2f442ba33c" />
+
+
 ## 🔑 Configuration Guide
 
 ### HubSpot Setup
