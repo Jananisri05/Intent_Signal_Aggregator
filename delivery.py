@@ -14,6 +14,10 @@ SLACK_WEBHOOK_URL = "https://hooks.slack.com/services/T0ATQN51TB3/B0ATQQPPQL9/bb
 
 # Path to your scoring output
 CSV_FILE_PATH = "scored_accounts_precise.csv"
+OPENROUTER_API_KEY = "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"
+OPENROUTER_MODEL: str = "thinkingmachines/inkling:free"
+
+OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
 
 # INTERNAL NAMES (Must match exactly what you created in HubSpot)
 FIELD_SCORE = "intent_score"
@@ -69,6 +73,85 @@ def sync_to_hubspot(client, df):
             print(f"  [X] Error updating {domain}: {e}")
 
     print(f"\nCRM Sync Complete: {success_count} updated, {skip_count} skipped.")
+def generate_buying_narrative(domain, score, is_surge, total_signals):
+
+    system_prompt = """
+You are a B2B sales intelligence assistant.
+
+Generate a professional buying-intent narrative for a sales representative.
+
+The narrative should explain why the account appears to be showing
+buying intent based on its intent score, surge status, and number of
+signals.
+
+Write in the style of a sales intelligence report:
+- Start with the company name.
+- Explain that the account is likely in an active buying cycle when
+  there is a strong intent score or detected surge.
+- Explain what the combination of multiple signals suggests about
+  the company's current level of activity.
+- Explain why the account should be considered a strong sales target.
+- Use confident but reasonable language such as "likely", "suggests",
+  "indicates", and "may indicate".
+- Do not invent specific facts such as funding amounts, hiring numbers,
+  job roles, products, customers, or news events because those facts
+  are not provided.
+
+Write ONE concise paragraph of 2-3 sentences.
+Do not use bullet points.
+Do not use headings.
+Do not mention the score repeatedly.
+Do not mention that you are an AI.
+"""
+
+    prompt = f"""
+Company: {domain}
+Intent Score: {score}/100
+Surge Detected: {is_surge}
+Total Signals Detected: {total_signals}
+
+Generate the buying narrative now.
+"""
+
+    headers = {
+        "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+        "Content-Type": "application/json"
+    }
+
+    payload = {
+        "model": OPENROUTER_MODEL,
+        "messages": [
+            {
+                "role": "system",
+                "content": system_prompt
+            },
+            {
+                "role": "user",
+                "content": prompt
+            }
+        ],
+        "temperature": 0.3
+    }
+
+    try:
+        response = requests.post(
+            OPENROUTER_URL,
+            headers=headers,
+            json=payload,
+            timeout=60
+        )
+
+        response.raise_for_status()
+
+        data = response.json()
+
+        narrative = data["choices"][0]["message"]["content"].strip()
+
+        return narrative if narrative else None
+
+    except Exception as e:
+        print(f"  [X] LLM narrative generation failed for {domain}: {e}")
+        return None
 
 def send_slack_alerts(df):
     print(f"\n--- Phase 2: Checking for Surges for Slack ---")
